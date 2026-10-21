@@ -1,0 +1,18 @@
+/*
+ * XIAO nRF54LM20B (Sense) application devicetree overlay
+ * ----------------------------------------------------------------------------
+ * Fix the IMU (LSM6DS3TR-C) "device not ready" issue:
+ *  The lsm6dsl driver reads WHO_AM_I during its POST_KERNEL init (see
+ *  lsm6dsl.c:735), but its supply rail imu_vdd = nPM1300 LDO1 is not powered
+ *  by default and calling regulator_enable() in main() is too late -- the
+ *  driver has already judged it not ready.
+ *  Here we add regulator-boot-on to LDO1 so the regulator core automatically
+ *  enables the output at boot (before sensor init) and waits 5 ms for it to
+ *  settle, so the supply is ready when the IMU driver initializes.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&imu_vdd {
+	regulator-boot-on;
+};

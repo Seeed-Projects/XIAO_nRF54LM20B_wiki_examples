@@ -1,0 +1,11 @@
+# PlatformIO build artifacts
+.pio/
+
+# macOS
+.DS_Store
+
+# recorded sample data
+rec_*.wav
+
+# local assistant settings
+.claude/

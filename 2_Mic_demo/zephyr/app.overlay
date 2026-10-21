@@ -1,0 +1,28 @@
+/*
+ * XIAO nRF54LM20B Mic Demo application devicetree overlay
+ * ----------------------------------------------------------------------------
+ * The onboard microphone (PDM2 = pdm20) and the IMU share nPM1300 LDO1
+ * (dmic_vdd = imu_vdd). Add regulator-boot-on to LDO1 so the regulator core
+ * auto-enables at boot, powering up the PDM mic (otherwise no data).
+ *
+ * The pdm20 node's pinctrl / clk are already configured by the board dtsi,
+ * no need to redefine them here.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&imu_vdd {
+	regulator-boot-on;
+};
+
+/*
+ * pdm20 has status="disabled" in the vendor dtsi; the board dtsi only added
+ * pinctrl without enabling it. With an explicit status="okay",
+ * DT_HAS_NORDIC_NRF_PDM_ENABLED=y, AUDIO_DMIC_NRFX_PDM becomes available, and
+ * the dmic_nrfx_pdm driver binds to this node and creates a device instance.
+ * clock-source=PCLK32M is already set by the board dtsi; no extra audio clock
+ * is needed.
+ */
+&pdm20 {
+	status = "okay";
+};

@@ -1,0 +1,11 @@
+/*
+ * XIAO nRF54LM20B battery level detection demo -- application-layer devicetree overlay
+ * ----------------------------------------------------------------------------
+ * The properties required by the nPM1300 charger node pmic_charger
+ * (term-microvolt / current-microamp / dischg-limit-microamp /
+ * vbus-limit-microamp / thermistor-* / charging-enable) are already fully
+ * set up in the board-level dtsi, so this overlay needs no further changes
+ * and is just a placeholder.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */

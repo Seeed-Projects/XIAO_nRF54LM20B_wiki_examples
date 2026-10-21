@@ -1,0 +1,37 @@
+/*
+ * XIAO nRF54LM20B BLE Observer Demo application devicetree overlay
+ * ----------------------------------------------------------------------------
+ * In this Zephyr 4.4 release the BLE controller is no longer toggled by the
+ * Kconfig switch CONFIG_BT_CTLR; it is enabled via a devicetree node instead.
+ * Following the nrf52 dtsi style, add a child node bt_hci_controller with
+ * compatible="zephyr,bt-hci-ll-sw-split" under &radio and set status="okay",
+ * then point chosen zephyr,bt-hci at it. This sets
+ * DT_HAS_ZEPHYR_BT_HCI_LL_SW_SPLIT_ENABLED -> BT_LL_SW_SPLIT takes effect ->
+ * HAS_BT_CTLR is selected, the Zephyr software controller (ULL/LLL) comes up,
+ * and the LLL drives the nRF54LM20B RADIO peripheral directly via the
+ * radio_nrf54lx HAL.
+ *
+ * &ieee802154 shares the same RADIO as BLE; disable it to avoid contention.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/* 1) Attach bt_hci_controller under the radio node (matches the nrf52 dtsi structure) */
+&radio {
+	bt_hci_controller: bt_hci_controller {
+		compatible = "zephyr,bt-hci-ll-sw-split";
+		status = "okay";
+	};
+};
+
+/* 2) chosen: point the default HCI device at the controller defined above */
+/ {
+	chosen {
+		zephyr,bt-hci = &bt_hci_controller;
+	};
+};
+
+/* 3) Disable 802.15.4 and hand the RADIO over entirely to the BLE controller */
+&ieee802154 {
+	status = "disabled";
+};

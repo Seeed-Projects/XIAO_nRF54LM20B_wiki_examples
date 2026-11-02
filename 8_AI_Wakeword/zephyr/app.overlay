@@ -1,0 +1,28 @@
+/*
+ * XIAO nRF54LM20B wakeword demo devicetree overlay
+ * ----------------------------------------------------------------------------
+ *  - imu_vdd (nPM1300 LDO1): regulator-boot-on keeps the mic rail up during
+ *    boot (the PDM mic shares LDO1 with the IMU; without this no data).
+ *  - pdm20: enable the PDM2 node (status="disabled" in the vendor dtsi);
+ *    pinctrl / clock-source are already configured by the board dtsi.
+ *  - axon: enable the NPU node for the Edge AI Axon runtime.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&imu_vdd {
+	regulator-boot-on;
+};
+
+&pdm20 {
+	status = "okay";
+	/* The nrfx PDM driver stops the stream permanently when its RX queue
+	 * fills (default depth 4 = 40 ms). This model's inference takes ~9.2 ms
+	 * of the 10 ms window, so the main loop has little headroom — deepen
+	 * the driver queue to 16 blocks (160 ms) to absorb jitter. */
+	queue-size = <16>;
+};
+
+&axon {
+	status = "okay";
+};

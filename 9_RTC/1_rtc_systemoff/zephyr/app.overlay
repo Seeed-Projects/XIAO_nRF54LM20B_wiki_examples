@@ -1,0 +1,39 @@
+/*
+ * XIAO nRF54LM20B -- RTC demo 1 "timestamp + System OFF" overlay
+ * ----------------------------------------------------------------------------
+ * Verbatim port of the official nRF54LM20A wiki RTC overlay.
+ *
+ * Carves the top 4 KB of SRAM (0x2007ec00) out as retained memory: it survives
+ * System OFF (warm boot) while normal SRAM content is lost, and is validated
+ * with a CRC32 so cold boots are detected reliably.
+ *
+ * Valid for the 20B as-is: 20A and 20B share nrf54lm20_a_b.dtsi, where
+ * cpuapp_sram is 511 KB at 0x20000000 (non-secure-map build), exactly the
+ * layout this overlay assumes (507 KB + 4 KB = 511 KB).
+ */
+
+/ {
+	cpuapp_sram@2007ec00 {
+		compatible = "zephyr,memory-region", "mmio-sram";
+		reg = <0x2007ec00 DT_SIZE_K(4)>;
+		zephyr,memory-region = "RetainedMem";
+		status = "okay";
+
+		retainedmem0: retainedmem {
+			compatible = "zephyr,retained-ram";
+			status = "okay";
+		};
+	};
+
+	aliases {
+		retainedmemdevice = &retainedmem0;
+	};
+};
+
+&cpuapp_sram {
+	/* Shrink SRAM to avoid overlap with retained memory region:
+	 * 511 - 4 = 507 KB = 0x7EC00
+	 */
+	reg = <0x20000000 DT_SIZE_K(507)>;
+	ranges = <0x0 0x20000000 0x7ec00>;
+};

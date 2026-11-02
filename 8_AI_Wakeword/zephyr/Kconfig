@@ -1,0 +1,43 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# XIAO nRF54LM20B — "okay nordic" wakeword demo application options.
+# Defaults follow the official sdk-edge-ai ww_kws sample (threshold 990,
+# history 20, count 15), relaxed slightly because this model was trained on
+# the nRF54 DK microphone and the XIAO's PDM mic has a different response.
+
+menu "XIAO wakeword demo"
+
+config WW_WAKE_DEBUG
+	bool "Log wakeword probability periodically"
+	default n
+	help
+	  Print the raw wakeword probability every ~200 ms ([WW] lines) so the
+	  detection threshold can be tuned against live audio.
+
+config WW_WAKE_PROBABILITY_THRESHOLD_MILLI
+	int "Wakeword probability threshold (1/1000)"
+	range 0 1000
+	default 800
+	help
+	  A single-window prediction counts as positive only when the model
+	  probability exceeds this value.
+
+config WW_WAKE_HISTORY_SIZE
+	int "Size of wakeword predictions history"
+	range 1 31
+	default 20
+	help
+	  Number of past windows considered for debouncing. One entry per
+	  model window (10 ms of audio).
+
+config WW_WAKE_COUNT_THRESHOLD
+	int "Positive windows required within history to confirm detection"
+	range 1 WW_WAKE_HISTORY_SIZE
+	default 12
+	help
+	  Sliding-window majority vote: detection fires when at least this
+	  many of the last WW_WAKE_HISTORY_SIZE windows were above threshold.
+
+endmenu
+
+source "Kconfig.zephyr"

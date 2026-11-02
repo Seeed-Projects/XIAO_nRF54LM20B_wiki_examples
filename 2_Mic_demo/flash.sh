@@ -2,11 +2,11 @@
 # One-shot build + sign + flash for XIAO nRF54LM20B
 # Usage: ./flash.sh
 #
-# Note: This board cannot enter DFU via the 1200bps soft trigger
-#       (the current app does not hand off boot-mode).
-#       Before running this script, manually put the board into DFU/serial-recovery mode:
-#         Hold B0 button (P0.09) -> press RST once -> release B0
-#       Then run this script.
+# Note: to enter DFU you can either
+#   (a) soft-trigger it from the running app (verified 2026-10-27): open the
+#       CDC port at 1200 baud and close it again, the board re-enumerates as
+#       "CDC ACM serial backend"; or
+#   (b) hold the B0 button (P0.09) -> press RST once -> release B0.
 # The version number must increment on every re-flash, otherwise mcuboot
 # rejects it as "same version".
 set -e
@@ -18,8 +18,10 @@ IMG="$HOME/.platformio/packages/framework-zephyr-nrf54lm20/_pio/bootloader/mcubo
 KEY="$HOME/.platformio/packages/framework-zephyr-nrf54lm20/_pio/bootloader/mcuboot/root-ed25519.pem"
 NRFUTIL="$HOME/.platformio/nrfutil/nrfutil-8.2.0-aarch64-apple-darwin/nrfutil-aarch64-apple-darwin-8.2.0/data/bin/nrfutil"
 PORT=/dev/cu.usbmodem1101
-# Increment this version number on every re-flash (getting_start has used up to 0.0.12)
-IMGVER="${IMGVER:-0.0.13}"
+# Increment this version number on every re-flash
+# (ledger: getting_start 0.0.12, mic 0.0.13+0.0.17, motion_wake 0.0.14,
+#  6axis 0.0.15/0.0.16)
+IMGVER="${IMGVER:-0.0.18}"
 
 echo "==> 1/3 Build"
 pio run

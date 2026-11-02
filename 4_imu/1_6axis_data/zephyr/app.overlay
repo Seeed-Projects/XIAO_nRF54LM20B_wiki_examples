@@ -1,0 +1,20 @@
+/*
+ * XIAO nRF54LM20B (Sense) application devicetree overlay
+ * ----------------------------------------------------------------------------
+ * Power the IMU (LSM6DS3TR-C) before the sensor driver probes it:
+ *  - regulator-boot-on: the regulator core enables imu_vdd (nPM1300 LDO1)
+ *    automatically during the regulator driver's init;
+ *  - startup-delay-us: after enabling, wait for the IMU's power-on boot
+ *    (LSM6DS3TR-C needs ~25 ms before it answers I2C);
+ *  - the sensor driver must init AFTER the regulator drivers: default sensor
+ *    priority is 90 but nPM1300 regulators init at 91/92, so prj.conf sets
+ *    CONFIG_SENSOR_INIT_PRIORITY=95. Only with all three pieces in place is
+ *    LDO1 up and settled when lsm6dsl reads WHO_AM_I.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&imu_vdd {
+	regulator-boot-on;
+	startup-delay-us = <25000>;
+};

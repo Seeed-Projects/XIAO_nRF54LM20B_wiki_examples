@@ -1,0 +1,66 @@
+/*
+ * XIAO nRF54LM20B -- IMU demo 3 "Electronic Ocean" overlay
+ * ----------------------------------------------------------------------------
+ * Port of the official nRF54LM20A wiki demo overlay:
+ * 6x10 WS2812 matrix on spi24 -- MOSI P1.0 (= XIAO D0, matrix data-in) and
+ * SCK P1.1. Same instance/pins as the 20A wiki (spi21/22 conflict with
+ * uart21/i2c22; on the 20B P1.0/P1.1 are likewise free).
+ *
+ * Compared to the wiki overlay we deliberately drop:
+ *   - the pmic / pmic_i2c (gpio-i2c P1.18/P1.17) node: already defined in the
+ *     20B board dtsi;
+ *   - `zephyr,deferred-init` on the IMU: not needed here, we use the verified
+ *     init-order fix (CONFIG_SENSOR_INIT_PRIORITY=95 + regulator-boot-on +
+ *     startup-delay below) from 1_6axis_data instead.
+ */
+
+/* IMU supply: LDO1 3.3V. regulator-boot-on is already in the board dtsi but
+ * is repeated here for exact parity with 1_6axis_data (verified working).
+ * The 25ms delay keeps the LSM6DS3TR-C out of power-on reset before the
+ * sensor driver probes (CONFIG_SENSOR_INIT_PRIORITY=95, see prj.conf). */
+&imu_vdd {
+	regulator-boot-on;
+	startup-delay-us = <25000>;
+};
+
+&pinctrl {
+	spi24_ws2812_default: spi24_ws2812_default {
+		group1 {
+			psels = <NRF_PSEL(SPIM_MOSI, 1, 0)>,
+				<NRF_PSEL(SPIM_SCK, 1, 1)>;
+		};
+	};
+	spi24_ws2812_sleep: spi24_ws2812_sleep {
+		group1 {
+			psels = <NRF_PSEL(SPIM_MOSI, 1, 0)>,
+				<NRF_PSEL(SPIM_SCK, 1, 1)>;
+			low-power-enable;
+		};
+	};
+};
+
+&spi24 {
+	status = "okay";
+	compatible = "nordic,nrf-spim";
+	pinctrl-0 = <&spi24_ws2812_default>;
+	pinctrl-1 = <&spi24_ws2812_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	led_strip: ws2812@0 {
+		compatible = "worldsemi,ws2812-spi";
+		reg = <0>;
+		spi-max-frequency = <8000000>;
+		spi-one-frame = <0xF8>;
+		spi-zero-frame = <0xC0>;
+		chain-length = <60>;
+		/* GBR chip order: 1=green 0=blue 2=red (see set_pixel() in main.c) */
+		color-mapping = <1 0 2>;
+		reset-delay = <250>;
+	};
+};
+
+/ {
+	aliases {
+		led-strip = &led_strip;
+	};
+};

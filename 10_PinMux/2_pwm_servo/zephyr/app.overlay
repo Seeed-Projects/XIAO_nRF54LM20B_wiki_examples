@@ -1,0 +1,35 @@
+/*
+ * XIAO nRF54LM20B -- Pin Multiplexing demo 2: PWM (servo on P1.0)
+ * ----------------------------------------------------------------------------
+ * Remaps PWM20 channel 0 from its board default (P1.22, the red channel of
+ * the RGB LED) to P1.0 / D0 so a hobby servo can be driven there.
+ *
+ * Nothing else is touched: the console stays on the board-default USB CDC
+ * (the wiki overlay moved it to &uart20 -- dropped here), and no uart20 /
+ * spi23 redefinition is needed (the wiki warned spi23 and uart20 share an
+ * instance; since we use neither, that conflict does not apply).
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&pinctrl {
+	servo_pwm20_default: servo_pwm20_default {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 1, 0)>; /* P1.0 / D0 */
+		};
+	};
+
+	servo_pwm20_sleep: servo_pwm20_sleep {
+		group1 {
+			psels = <NRF_PSEL(PWM_OUT0, 1, 0)>;
+			low-power-enable;
+		};
+	};
+};
+
+&pwm20 {
+	status = "okay";
+	pinctrl-0 = <&servo_pwm20_default>;
+	pinctrl-1 = <&servo_pwm20_sleep>;
+	/* pinctrl-names = "default", "sleep" is already set by the board */
+};

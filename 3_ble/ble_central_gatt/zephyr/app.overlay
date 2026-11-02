@@ -1,0 +1,28 @@
+/*
+ * XIAO nRF54LM20B BLE Advertising Demo devicetree overlay
+ * ----------------------------------------------------------------------------
+ * In Zephyr 4.4 the BLE controller is enabled via a devicetree node, not the
+ * old CONFIG_BT_CTLR switch. Add bt_hci_controller (compatible
+ * "zephyr,bt-hci-ll-sw-split") under &radio and point chosen zephyr,bt-hci at
+ * it; the Zephyr software controller (ULL/LLL) then drives the nRF54LM20B
+ * RADIO via radio_nrf54lx. &ieee802154 shares the RADIO -- disable it.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&radio {
+	bt_hci_controller: bt_hci_controller {
+		compatible = "zephyr,bt-hci-ll-sw-split";
+		status = "okay";
+	};
+};
+
+/ {
+	chosen {
+		zephyr,bt-hci = &bt_hci_controller;
+	};
+};
+
+&ieee802154 {
+	status = "disabled";
+};

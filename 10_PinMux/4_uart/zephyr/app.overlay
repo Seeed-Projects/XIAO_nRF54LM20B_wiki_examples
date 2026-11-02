@@ -1,0 +1,17 @@
+/*
+ * XIAO nRF54LM20B -- Pin Multiplexing demo 4: UART (uart21 polling echo)
+ * ----------------------------------------------------------------------------
+ * UART21 is already configured in the board DTS (pinctrl P1.8 TX / P1.9 RX,
+ * both default and sleep states). This overlay only enables it.
+ *
+ * The console is NOT touched: the wiki moved it to &uart20 and enabled
+ * uart20 -- both dropped here, LOG output stays on the default USB CDC
+ * console so you can watch it on cu.usbmodem*.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+&uart21 {
+	current-speed = <115200>;
+	status = "okay";
+};

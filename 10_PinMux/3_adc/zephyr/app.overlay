@@ -1,0 +1,23 @@
+/*
+ * XIAO nRF54LM20B -- Pin Multiplexing demo 3: Analog (ADC on P1.0 / AIN0)
+ * ----------------------------------------------------------------------------
+ * Declares the ADC channel used by the app under /zephyr,user (the standard
+ * Zephyr pattern that ADC_DT_SPEC_GET(DT_PATH(zephyr_user)) consumes):
+ *   io-channels = <&adc 0>   ->  SAADC channel 0 = AIN0 = P1.0 / D0
+ *
+ * The &adc node is disabled in the SoC dtsi by default, so it is enabled
+ * here. The console is NOT touched (the wiki moved it to &uart20 -- dropped,
+ * output stays on USB CDC), and no uart20 block is needed.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {
+	zephyr,user {
+		io-channels = <&adc 0>;
+	};
+};
+
+&adc {
+	status = "okay";
+};

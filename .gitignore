@@ -1,11 +1,15 @@
-# PlatformIO build artifacts
+# PlatformIO / Zephyr / NCS build outputs
 .pio/
+build/
+
+# Python
+__pycache__/
+*.pyc
 
 # macOS
 .DS_Store
 
-# recorded sample data
-rec_*.wav
-
-# local assistant settings
-.claude/
+# Editors
+*.swp
+*~
+.vscode/

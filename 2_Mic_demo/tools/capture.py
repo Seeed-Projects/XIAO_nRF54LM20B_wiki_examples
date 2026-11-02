@@ -22,6 +22,7 @@ Flow:
 Dependency: pyserial (pio env ships it: ~/.platformio/penv/.zephyr-4.4.0/bin/python)
 """
 
+import glob
 import os
 import sys
 import time
@@ -37,15 +38,32 @@ MAGIC_START = b"XIAOWAV1"   # Start: followed by a 4+2+2 byte header
 MAGIC_STOP  = b"WAV0"        # Last 4 bytes of the stop prefix, for cross-block matching
 MAGIC_STOP_FULL = b"XIAOWAV0"
 
-PORT = sys.argv[1] if len(sys.argv) > 1 else "/dev/cu.usbmodem1101"
+
+def autodetect_port():
+    """The CDC port name changes between USB ports and app/DFU modes, so pick
+    the first /dev/cu.usbmodem* that exists instead of hardcoding one."""
+    ports = sorted(glob.glob("/dev/cu.usbmodem*"))
+    if not ports:
+        sys.exit("ERROR: no /dev/cu.usbmodem* port found. Is the board plugged in and in app mode?")
+    return ports[0]
+
+
+PORT = sys.argv[1] if len(sys.argv) > 1 else autodetect_port()
 BAUD = int(sys.argv[2]) if len(sys.argv) > 2 else 115200
 OUTDIR = os.getcwd()   # Project folder (the directory this script runs in)
 
 
 def main():
-    ser = serial.Serial(PORT, BAUD, timeout=0.2)
+    try:
+        ser = serial.Serial(PORT, BAUD, timeout=0.2)
+    except serial.SerialException as e:
+        sys.exit(
+            f"ERROR: could not open port {PORT}: {e}\n"
+            "  - 'Resource busy': close screen / the VS Code serial monitor (or any web serial page) first\n"
+            "  - The port name may have changed: run `ls /dev/cu.usbmodem*`, then python3 capture.py <port>"
+        )
     ser.dtr = True
-    print(f"Listening on {PORT} ... press the User Button on the board to start/stop recording. Ctrl+C to quit.")
+    print(f"Listening on {PORT} ... run this script FIRST, then press the User Button on the board to start/stop recording. Ctrl+C to quit.")
 
     buf = bytearray()
     state = "wait_start"   # wait_start | recording

@@ -1,0 +1,15 @@
+/*
+ * XIAO nRF54LM20B -- Pin Multiplexing demo 1: Digital GPIO
+ * ----------------------------------------------------------------------------
+ * No hardware re-mapping is needed for this demo. gpio1 is a SoC-level
+ * node, and the two pins used (P1.0 / D0 for the button, P1.31 / D1 for
+ * the buzzer) are plain GPIO -- they do not go through the pinctrl
+ * subsystem on nRF54L, so there is nothing to override here.
+ *
+ * The overlay file still exists (PlatformIO expects one); it is empty on
+ * purpose.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+/ {};

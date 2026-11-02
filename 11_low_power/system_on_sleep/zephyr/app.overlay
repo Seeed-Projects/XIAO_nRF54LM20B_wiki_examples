@@ -1,0 +1,38 @@
+/*
+ * XIAO nRF54LM20B Low Power Demo — System ON Sleep: devicetree overlay.
+ *
+ * Enables the Zephyr software BLE controller: a bt_hci_controller node with
+ * compatible="zephyr,bt-hci-ll-sw-split" under &radio (status okay), and
+ * chosen zephyr,bt-hci pointing at it. BT_LL_SW_SPLIT then defaults on,
+ * HAS_BT_CTLR is selected, and the controller link comes up. The host + sw
+ * controller drive the nRF54LM20B RADIO via radio_nrf54lx.
+ *
+ * &ieee802154 (okay by default in the board dtsi) shares the RADIO with BLE,
+ * so it is disabled here to yield the radio.
+ *
+ * LDO1 (label imu_vdd / dmic_vdd) powers the IMU and the PDM microphone and is
+ * marked regulator-boot-on in the board dtsi. It is unused in this demo, so its
+ * regulator-boot-on is deleted to stop the rail staying enabled during sleep.
+ */
+
+&radio {
+	status = "okay";
+	bt_hci_controller: bt_hci_controller {
+		compatible = "zephyr,bt-hci-ll-sw-split";
+		status = "okay";
+	};
+};
+
+/ {
+	chosen {
+		zephyr,bt-hci = &bt_hci_controller;
+	};
+};
+
+&ieee802154 {
+	status = "disabled";
+};
+
+&imu_vdd {
+	/delete-property/ regulator-boot-on;
+};

@@ -1,0 +1,33 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# XIAO nRF54LM20B Sense — 5-class IMU gesture demo application options.
+
+menu "XIAO gesture demo"
+
+config GESTURE_DEMO_DEBUG
+	bool "Log every inference result"
+	default n
+	help
+	  Print the raw result of every window inference ([INFER] lines),
+	  instead of only the throttled gesture feedback. Useful to observe
+	  the ~330 ms prediction cadence directly.
+
+config GESTURE_DEMO_MIN_CONFIDENCE_PCT
+	int "Minimum confidence for gesture feedback (percent)"
+	default 50
+	range 0 100
+	help
+	  Gesture (non-IDLE) predictions below this confidence are not
+	  reported and do not flash the LED.
+
+config GESTURE_DEMO_REPORT_INTERVAL_MS
+	int "Minimum interval between gesture feedback reports (ms)"
+	default 3000
+	range 100 60000
+	help
+	  Throttle for serial output and LED feedback. The model itself keeps
+	  producing a prediction every window shift (33 samples / ~330 ms).
+
+endmenu
+
+source "Kconfig.zephyr"

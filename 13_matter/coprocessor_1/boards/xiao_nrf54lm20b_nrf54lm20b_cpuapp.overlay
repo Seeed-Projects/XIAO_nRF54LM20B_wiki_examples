@@ -1,0 +1,46 @@
+/*
+ * Copyright (c) 2026 Nordic Semiconductor ASA
+ *
+ * SPDX-License-Identifier: LicenseRef-Nordic-5-Clause
+ */
+
+/*
+ * Spinel-over-USB-CDC test:
+ *   - ot-uart -> &cdc_acm_uart so the OpenThread RCP spinel NCP runs over the
+ *     USB CDC ACM port (the same port zephyr,console uses). This is the path
+ *     OTBR will use to talk to the RCP.
+ *   - console/LOG also share cdc_acm_uart; for a clean spinel stream this
+ *     would normally be split via dual CDC instances (rcp_hci), but here we
+ *     first verify the CDC port can carry spinel at all. HDLC frames (7e..7e)
+ *     are distinguishable from log text.
+ */
+&uart20 {
+	current-speed = <1000000>;
+	status = "disabled";
+};
+
+/ {
+	chosen {
+		zephyr,ot-uart = &cdc_acm_uart;
+	};
+};
+
+&pmic_i2c {
+	status = "disabled";
+};
+
+&pmic {
+	status = "disabled";
+
+	charger {
+		status = "disabled";
+	};
+
+	regulators {
+		status = "disabled";
+
+		LDO1 {
+			status = "disabled";
+		};
+	};
+};

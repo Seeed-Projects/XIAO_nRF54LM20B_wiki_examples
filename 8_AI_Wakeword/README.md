@@ -1,69 +1,69 @@
-# 8_AI_Wakeword — "okay nordic" 唤醒词检测（Axon NPU）
+# 8_AI_Wakeword — "okay nordic" wakeword detection (Axon NPU)
 
-在 XIAO nRF54LM20B Sense 上运行 Nordic Edge AI Lab 训练的 **okay_nordic 唤醒词模型**，
-推理跑在 nRF54LM20B 的 **Axon NPU** 上，音频来自板载 PDM 麦克风。
+Runs the **okay_nordic wakeword model** trained in Nordic Edge AI Lab on the XIAO nRF54LM20B Sense,
+with inference on the nRF54LM20B's **Axon NPU** and audio from the on-board PDM microphone.
 
-## 模型
+## Model
 
-| 项 | 值 |
+| Item | Value |
 |---|---|
-| Edge AI Lab Solution | `okay_nordic`（唤醒词 wakeword） |
-| 输入 | int16 单声道 PCM，16 kHz |
-| 窗口 | 160 采样（10 ms），步进 160，流式 |
-| 特征 | 40 维 mel 频谱（Edge AI runtime 内部提取，固件只喂原始 PCM） |
-| 输出 | 1 类：唤醒词出现概率 |
-| 推理 | Axon NPU（`nrf_edgeai_run_inference_axon_audiomels`），runtime v3 |
+| Edge AI Lab Solution | `okay_nordic` (wakeword) |
+| Input | int16 mono PCM, 16 kHz |
+| Window | 160 samples (10 ms), step 160, streaming |
+| Features | 40-dim mel spectrogram (extracted internally by the Edge AI runtime; firmware feeds only raw PCM) |
+| Output | 1 class: probability of the wakeword |
+| Inference | Axon NPU (`nrf_edgeai_run_inference_axon_audiomels`), runtime v3 |
 
-模型文件在 `src/nrf_edgeai_generated/`，**生成物一行未改**。
+The model files live in `src/nrf_edgeai_generated/` — **the generated artifact is unmodified**.
 
-## 数据通路（与官方 sdk-edge-ai `applications/ww_kws` 示例同构）
+## Data path (structurally identical to the official sdk-edge-ai `applications/ww_kws` example)
 
 ```
-PDM2 mic (pdm20) → 160 采样/块 (10 ms)
-      → nrf_edgeai_feed_inputs() 喂原始 int16 PCM
+PDM2 mic (pdm20) → 160 samples/block (10 ms)
+      → nrf_edgeai_feed_inputs() feeds raw int16 PCM
       → nrf_edgeai_run_inference()  (Axon NPU)
-      → 概率阈值 + 滑窗去抖 (12/20 窗口)
-      → 绿色 LED 闪 300 ms + 串口打印
+      → probability threshold + sliding-window debounce (12/20 window)
+      → green LED blinks 300 ms + serial print
 ```
 
-mic 块大小刻意等于模型窗口（都是 160 采样），每次 `dmic_read()` 恰好完成一个窗口。
+The mic block size is deliberately equal to the model window (both 160 samples), so each `dmic_read()` completes exactly one window.
 
-## 工程结构
+## Project structure
 
 ```
-├── src/main.c                       ← 应用（采集 + 喂入 + 去抖 + 反馈）
-├── src/nrf_edgeai_generated/        ← Edge AI Lab 生成的模型（零修改）
-├── zephyr/CMakeLists.txt            ← PIO/MDK 兼容层（见 7_AI_Gesture_5Class 的踩坑记录）
+├── src/main.c                       ← application (capture + feed + debounce + feedback)
+├── src/nrf_edgeai_generated/        ← Edge AI Lab generated model (zero modification)
+├── zephyr/CMakeLists.txt            ← PIO/MDK compatibility layer (see the pitfall notes in 7_AI_Gesture_5Class)
 ├── zephyr/prj.conf                  ← Edge AI + Axon(6048) + AUDIO_DMIC + MCUboot
-├── zephyr/app.overlay               ← imu_vdd boot-on + pdm20 + axon 使能
-├── zephyr/Kconfig                   ← 阈值/去抖可调参数
-└── flash.sh                         ← 编译 + 签名 + 上传
+├── zephyr/app.overlay               ← imu_vdd boot-on + pdm20 + axon enable
+├── zephyr/Kconfig                   ← tunable threshold / debounce parameters
+└── flash.sh                         ← build + sign + upload
 ```
 
-## 编译
+## Build
 
 ```bash
 cd 8_AI_Wakeword
 XIAO_EDGE_AI_DIR=~/XIAO-EdgeAI/tools/sdk-edge-ai pio run
 ```
 
-（需要本地 sdk-edge-ai **v3**，模型生成的 runtime 版本号是 3。）
+(Requires a local sdk-edge-ai **v3**; the model's generated runtime version is 3.)
 
-## 烧录
+## Flash
 
-板子进 DFU：**按住 B0 (P0.09) → 点一下 RST → 松开 B0**，然后：
-
-```bash
-./flash.sh                 # 串口自动检测；重复烧录时 IMGVER=0.0.101 ./flash.sh 递增版本
-```
-
-## 验证
+Put the board into DFU: **hold B0 (P0.09) → tap RST once → release B0**, then:
 
 ```bash
-screen /dev/cu.usbmodem1101 115200   # 退出 Ctrl+A K
+./flash.sh                 # auto-detects the serial port; for repeated flashes, bump the version with IMGVER=0.0.101 ./flash.sh
 ```
 
-对着板子说 **"okay nordic"**：
+## Verification
+
+```bash
+screen /dev/cu.usbmodem1101 115200   # exit Ctrl+A K
+```
+
+Say **"okay nordic"** toward the board:
 
 ```
 *** XIAO M20B Edge AI Wakeword Demo ***
@@ -74,21 +74,21 @@ screen /dev/cu.usbmodem1101 115200   # 退出 Ctrl+A K
 [AI] Probability: 0.94
 ```
 
-每 5 秒一条 `[STAT]`：推理次数、平均耗时、峰值概率——**调阈值就看着 peak prob 调**。
+A `[STAT]` line every 5 seconds: inference count, average time, peak probability — **tune the threshold by watching peak prob**.
 
-## 调参（zephyr/Kconfig → prj.conf 里覆盖）
+## Tuning (zephyr/Kconfig → override in prj.conf)
 
-| 参数 | 默认 | 说明 |
+| Parameter | Default | Description |
 |---|---|---|
-| `WW_WAKE_PROBABILITY_THRESHOLD_MILLI` | 800 | 单窗口判定为正的概率阈值（官方 DK 示例用 990，换 XIAO 的 PDM 麦放宽到 800） |
-| `WW_WAKE_HISTORY_SIZE` | 20 | 去抖滑窗长度（每窗 10 ms） |
-| `WW_WAKE_COUNT_THRESHOLD` | 12 | 滑窗内超阈值窗口数 ≥ 此值才确认 |
-| `WW_WAKE_DEBUG` | n | 每 200 ms 打印原始概率 |
+| `WW_WAKE_PROBABILITY_THRESHOLD_MILLI` | 800 | per-window probability threshold to count as a positive (official DK example uses 990; relaxed to 800 for the XIAO's PDM mic) |
+| `WW_WAKE_HISTORY_SIZE` | 20 | debounce sliding-window length (10 ms per window) |
+| `WW_WAKE_COUNT_THRESHOLD` | 12 | confirm only when the number of above-threshold windows in the sliding window ≥ this value |
+| `WW_WAKE_DEBUG` | n | print raw probability every 200 ms |
 
-> 模型训练用的大概率是 nRF54 DK 的麦克风，XIAO 的 PDM 麦频响不同，灵敏度/阈值可能需要按实测微调（看 `[STAT]` 的 peak prob）。
+> The model was very likely trained with an nRF54 DK microphone; the XIAO's PDM mic has a different frequency response, so sensitivity/threshold may need fine-tuning based on measurement (watch peak prob in `[STAT]`).
 
-## 依赖
+## Dependencies
 
-- PlatformIO + SeeedStudio platform（板卡 `seeed-xiao-nrf54lm20b`）
-- sdk-edge-ai v3（`~/XIAO-EdgeAI/tools/sdk-edge-ai`）
-- 实测占用：Flash 197,100 B / 1784 KB（10.8%），RAM 37,568 B / 511 KB（7.2%）
+- PlatformIO + SeeedStudio platform (board `seeed-xiao-nrf54lm20b`)
+- sdk-edge-ai v3 (`~/XIAO-EdgeAI/tools/sdk-edge-ai`)
+- Measured footprint: Flash 197,100 B / 1784 KB (10.8%), RAM 37,568 B / 511 KB (7.2%)

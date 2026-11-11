@@ -1,30 +1,30 @@
-# PinMux demo 1 — 数字引脚 (Digital GPIO)
+# PinMux demo 1 — Digital GPIO
 
-对照 [M20A wiki · 数字引脚](https://wiki.seeedstudio.com/cn/xiao_nrf54lm20a_pin_multiplexing/#digital)。
+Companion to the [M20A wiki · Digital](https://wiki.seeedstudio.com/xiao_nrf54lm20a_pin_multiplexing/#digital).
 
-## 功能
-Grove Button (P1.0 / D0) 作输入，Grove Buzzer (P1.31 / D1) 作输出：按下响，松开停。
+## Function
+Grove Button (P1.0 / D0) as input, Grove Buzzer (P1.31 / D1) as output: beep while pressed, silent when released.
 
-## 硬件
-| 信号 | 引脚 | XIAO D# | Grove |
+## Hardware
+| Signal | Pin | XIAO D# | Grove |
 |---|---|---|---|
-| Button | P1.0 | D0 | Grove Button（板载下拉，高电平=按下）|
-| Buzzer | P1.31 | D1 | **有源**蜂鸣器（内置振荡，HIGH=响）|
+| Button | P1.0 | D0 | Grove Button (on-board pull-down, HIGH = pressed) |
+| Buzzer | P1.31 | D1 | **Active** buzzer (built-in oscillator, HIGH = beep) |
 
-> ⚠️ 必须是**有源**蜂鸣器。无源压电片需要 PWM 驱动，请改用 demo 2。
+> ⚠️ Must be an **active** buzzer. A passive piezo element needs PWM drive — use demo 2 instead.
 
-## 20B 适配
-- 删除 wiki overlay 里 `zephyr,console=&uart20`：输出走板级默认 **USB CDC**（`cu.usbmodem*`），不用接 USB-TTL。
-- GPIO 不经 pinctrl，P1.0/P1.31 板级默认可用，overlay 留空。
-- 加 mcuboot self-confirm。
+## 20B adaptations
+- Removed `zephyr,console=&uart20` from the wiki overlay: output goes through the board-default **USB CDC** (`cu.usbmodem*`), no USB-TTL needed.
+- GPIO does not go through pinctrl; P1.0/P1.31 are usable by board default, so the overlay is left empty.
+- Added mcuboot self-confirm.
 
-## 编译 / 烧录
+## Build / Flash
 ```
 cd 1_digital_gpio
-pio run                 # 编译
-./flash.sh              # 构建+签名+上传（板子先进 DFU）
-# 烧完按一次 RST，再开 cu.usbmodem* @115200
+pio run                 # build
+./flash.sh              # build + sign + upload (put the board into DFU first)
+# After flashing, press RST once, then open cu.usbmodem* @115200
 ```
 
-## 验证
-按按钮 → 串口打印 `Button PRESSED -> Buzzer ON`，蜂鸣器响；松开 → `Button released -> Buzzer OFF`。
+## Verification
+Press the button → serial prints `Button PRESSED -> Buzzer ON` and the buzzer beeps; release → `Button released -> Buzzer OFF`.

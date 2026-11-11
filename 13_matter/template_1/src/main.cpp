@@ -19,8 +19,9 @@ int main()
 
 	LOG_ERR("Matter startup failed with code %" CHIP_ERROR_FORMAT, err.Format());
 
-	/* LED 可用时持续快闪报错（内部自带 k_sleep 让出 CPU，USB CDC / shell 仍可诊断）；
-	 * LED 未初始化（Board::Init 之前就失败）时直接返回，落到下面的 sleep 循环。
+	/* When the LED is available, blink it rapidly to signal the error (the loop's k_sleep yields the CPU,
+	 * so USB CDC / shell remain diagnosable); if the LED was never initialized (failure before Board::Init),
+	 * this returns immediately and we fall through to the sleep loop below.
 	 */
 	AppTask::Instance().IndicateFatalError();
 

@@ -1,7 +1,7 @@
 /*
  * XIAO nRF54LM20B -- Pin Multiplexing demo 3: Analog (ADC on P1.0 / AIN0)
  * ----------------------------------------------------------------------------
- * Port of the wiki "模拟量" demo. Reads SAADC channel 0 (P1.0 / D0 = AIN0)
+ * Port of the wiki "Analog" demo. Reads SAADC channel 0 (P1.0 / D0 = AIN0)
  * and prints the raw 16-bit sample every 500 ms.
  *
  * 20B adaptations vs the 20A original:

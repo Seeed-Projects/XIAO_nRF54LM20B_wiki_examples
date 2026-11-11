@@ -33,6 +33,7 @@
 #include <zephyr/sys/printk.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/hwinfo.h>
+#include <zephyr/drivers/regulator.h>
 #include <zephyr/pm/device.h>
 #include <zephyr/sys/poweroff.h>
 
@@ -171,6 +172,53 @@ static void suspend_console_best_effort(void)
 	}
 }
 
+/* The XIAO nRF54LM20B console is USB CDC, so the usbhs controller + USB PHY
+ * stay alive after suspending just the CDC function. Suspend the controller too
+ * so the USB transceiver cannot leak while the SoC is in System OFF. */
+static void suspend_usb_controller(void)
+{
+#if DT_NODE_EXISTS(DT_NODELABEL(usbhs))
+	const struct device *usb = DEVICE_DT_GET(DT_NODELABEL(usbhs));
+
+	if (device_is_ready(usb)) {
+		int rc = pm_device_action_run(usb, PM_DEVICE_ACTION_SUSPEND);
+		printk("Suspend usbhs: %d\n", rc);
+	}
+#endif
+}
+
+/* Turn OFF the two nPM1300 LDOs over the bit-bang I²C bus before poweroff.
+ *
+ * The board dtsi exposes only LDO1 (imu_vdd / dmic_vdd → IMU + PDM mic rail);
+ * LDO2 (header_ldo → the empty "LDO2_3V3" header/test rail) is added in
+ * app.overlay. Both LDOs power up in the nPM1300 OTP-enabled state, and deleting
+ * regulator-boot-on only stops the driver from *forcing* them on — it does not
+ * write the enable register. An explicit regulator_disable() is required to
+ * actually deassert the LDO switch and shed the rail load (IMU deep power-down,
+ * mic bias, LDO quiescent) in System OFF.
+ *
+ * BUCK1/BUCK2 (VSYS_3V3 → SoC VDD + flash) are NOT touched: they must stay up
+ * to keep the SoC's always-on DETECT wake domain biased while off.
+ */
+static void disable_pmic_ldos(void)
+{
+	const struct device *ldo1 = DEVICE_DT_GET(DT_NODELABEL(imu_vdd));
+	const struct device *ldo2 = DEVICE_DT_GET(DT_NODELABEL(header_ldo));
+
+	if (device_is_ready(ldo1)) {
+		int rc = regulator_disable(ldo1);
+		printk("Disable LDO1 (imu/mic rail): %d\n", rc);
+	} else {
+		printk("LDO1 not ready, skipping\n");
+	}
+	if (device_is_ready(ldo2)) {
+		int rc = regulator_disable(ldo2);
+		printk("Disable LDO2 (header rail): %d\n", rc);
+	} else {
+		printk("LDO2 not ready, skipping\n");
+	}
+}
+
 int main(void)
 {
 	printk("Starting Low Power Demo — System OFF\n");
@@ -181,12 +229,14 @@ int main(void)
 	configure_gpio_wakeup();
 	release_led_gpios();
 	suspend_external_flash();
+	disable_pmic_ldos();
 
 	/* Let the last printk bytes drain before we yank the console. */
 	k_msleep(30);
 
 	printk("Entering System OFF — press BOOT (P0.09) to wake\n");
 	suspend_console_best_effort();
+	suspend_usb_controller();
 
 	(void)hwinfo_clear_reset_cause();
 	sys_poweroff();

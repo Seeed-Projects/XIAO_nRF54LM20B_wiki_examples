@@ -1,17 +1,37 @@
 /*
- * XIAO nRF54LM20B (Sense) application-level devicetree overlay
+ * XIAO nRF54LM20A (Sense) application-level devicetree overlay
  * ----------------------------------------------------------------------------
- * Fixes the IMU (LSM6DS3TR-C) "device not ready" issue:
- *  the lsm6dsl driver reads WHO_AM_I during its POST_KERNEL init (see
- *  lsm6dsl.c:735), but its supply rail imu_vdd = nPM1300 LDO1 is off by
- *  default, so a regulator_enable() from the app in main() is too late -
- *  the driver has already decided it is not ready.
- *  regulator-boot-on here makes the regulator core enable the output during
- *  boot (before sensor init) and wait 5 ms for it to settle, so the rail is
- *  up by the time the IMU driver initializes.
+ * Two things, both needed because this example is built WITHOUT mcuboot
+ * (CONFIG_BOOTLOADER_MCUBOOT=n, no sysbuild) and flashed directly to RRAM
+ * base 0x0 over SWD with `nrfutil device program`:
+ *
+ *  1. Delete zephyr,code-partition.
+ *     The board dtsi sets zephyr,code-partition = &slot0_partition (@0x10000),
+ *     which is the application slot used when mcuboot chains the app. With
+ *     mcuboot disabled the CPU must reset straight into our image, so the image
+ *     has to link at the RRAM base 0x0 (vector table at 0x0). Removing the
+ *     chosen code-partition makes Zephyr fall back to the zephyr,flash base
+ *     (cpuapp_rram @0x0) -> FLASH_LOAD_OFFSET=0x0.
+ *
+ *  2. regulator-boot-on on imu_vdd (nPM1300 LDO1).
+ *     The lsm6dsl driver reads WHO_AM_I during POST_KERNEL init (lsm6dsl.c),
+ *     but its supply rail is off by default; a regulator_enable() from main()
+ *     is too late. regulator-boot-on makes the regulator core enable the output
+ *     during boot (before sensor init) so the rail is up in time.
+ *
+ * The USB CDC-ACM console is added by the `cdc-acm-console` snippet
+ * (-S cdc-acm-console on the west build line), not here: it appends a
+ * cdc_acm_uart node under &zephyr_udc0 (&usbhs) and repoints zephyr,console at
+ * it, plus enables USB_DEVICE_STACK_NEXT + CDC_ACM_SERIAL_INITIALIZE_AT_BOOT.
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
+/ {
+	chosen {
+		/delete-property/ zephyr,code-partition;
+	};
+};
 
 &imu_vdd {
 	regulator-boot-on;

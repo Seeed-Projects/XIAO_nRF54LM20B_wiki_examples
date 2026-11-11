@@ -20,8 +20,9 @@ public:
 
 	CHIP_ERROR StartApp();
 
-	/* 启动失败时让板载 LED 持续快闪报错；若 LED 尚未初始化（Board::Init 之前就失败）
-	 * 则直接返回，交由调用方保持串口可诊断。
+	/* On startup failure, blink the on-board LED rapidly to signal the error;
+	 * if the LED is not initialized yet (failure before Board::Init), just
+	 * return and leave the serial console diagnosable for the caller.
 	 */
 	void IndicateFatalError();
 

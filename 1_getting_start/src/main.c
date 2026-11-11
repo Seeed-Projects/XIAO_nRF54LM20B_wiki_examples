@@ -1,23 +1,25 @@
 /*
- * XIAO nRF54LM20B getting-started
+ * XIAO nRF54LM20A getting-started
  * ----------------------------------------------------------------------------
  *  1. On power-up the user RGB LED (common anode, red/green/blue channels)
  *     blinks in rotation: red 500ms -> off 500ms -> green 500ms -> off 500ms
  *     -> blue 500ms -> off 500ms, repeating.
  *  2. Once attached to a PC, the USBHS (CDC-ACM) serial port prints once:
- *     "Hello, XIAO nRF54LM20B".
+ *     "Hello, XIAO nRF54LM20A".
  *  3. Sense variant: the same output is followed by current raw IMU
  *     (LSM6DS3TR-C) readings.
  *
- * The USB serial port is initialized automatically at boot by the board-level
- * defconfig (CDC_ACM_SERIAL_INITIALIZE_AT_BOOT=y); zephyr,console =
- * cdc_acm_uart is ready before main() runs. The application therefore does
- * not need to - and must not - build a second usbd context manually (that
- * would conflict with the automatic backend and break USB enumeration).
+ * The USB CDC-ACM console is added by the `cdc-acm-console` snippet (-S on the
+ * west build line): it appends a cdc_acm_uart node under &usbhs and repoints
+ * zephyr,console at it, and enables CDC_ACM_SERIAL_INITIALIZE_AT_BOOT so the
+ * USB device and CDC ACM UART are up before main() runs. The application
+ * therefore does not need to - and must not - build a second usbd context
+ * manually (that would conflict with the auto backend and break enumeration).
  *
  * Board-level devicetree (in the framework package):
- *   - led0/blue_led/red_led/green_led: common-anode RGB, GPIO_ACTIVE_LOW
- *   - zephyr_udc0 = &usbhs, cdc_acm_uart = zephyr,console
+ *   - red_led/green_led/blue_led: common-anode RGB, GPIO_ACTIVE_LOW
+ *     (led0 alias = blue_led)
+ *   - zephyr_udc0 = &usbhs (vregusb enabled); cdc_acm_uart added by the snippet
  *   - imu0 = lsm6ds3tr_c@6a (i2c30), imu_vdd = PMIC nPM1300 LDO1
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -31,7 +33,6 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/drivers/regulator.h>
 #include <zephyr/sys/printk.h>
-#include <zephyr/dfu/mcuboot.h>
 
 /* ============================ Board resource bindings ============================ */
 
@@ -136,15 +137,6 @@ int main(void)
 	bool led_on = false;
 	bool greeted = false;
 
-	/*
-	 * 0) Self-confirm the running image: an image uploaded via mcuboot
-	 *    starts as a test image (unconfirmed, and would be reverted).
-	 *    Confirm it immediately at startup so this image stays permanent
-	 *    and a reset no longer rolls back to an empty image.
-	 *    Returns non-zero if already permanent - safe to ignore.
-	 */
-	(void)boot_write_img_confirmed();
-
 	/* 1) RGB LED: configure all three channels as outputs, initially off
 	 *    (with GPIO_ACTIVE_LOW, inactive = high level). */
 	for (size_t i = 0; i < ARRAY_SIZE(rgb); i++) {
@@ -182,7 +174,7 @@ int main(void)
 			    && dtr != 0U) {
 				/* Let the host finish port setup before printing */
 				k_msleep(50);
-				printk("Hello, XIAO nRF54LM20B\r\n");
+				printk("Hello, XIAO nRF54LM20A\r\n");
 				imu_print();
 				greeted = true;
 			}

@@ -1,13 +1,13 @@
-# PinMux demo 6 — SPI（GC9A01 圆屏）
+# PinMux demo 6 — SPI (GC9A01 round display)
 
-对照 [M20A wiki · SPI](https://wiki.seeedstudio.com/cn/xiao_nrf54lm20a_pin_multiplexing/#spi)。
+Companion to the [M20A wiki · SPI](https://wiki.seeedstudio.com/xiao_nrf54lm20a_pin_multiplexing/#spi).
 
-## 功能
-spi23 驱动 GC9A01 240×240 圆形 LCD，通过 MIPI DBI SPI 接口，RGB565：先循环 6 种纯色满屏，
-再画 6 条竖向彩条，循环往复。
+## Function
+spi23 drives a GC9A01 240×240 round LCD via the MIPI DBI SPI interface, RGB565: first cycles through 6 solid
+full-screen colors, then draws 6 vertical color bars, looping back and forth.
 
-## 硬件
-| 信号 | 引脚 | XIAO D# |
+## Hardware
+| Signal | Pin | XIAO D# |
 |---|---|---|
 | SPI SCK | P1.4 | D8 |
 | SPI MISO | P1.5 | D9 |
@@ -15,22 +15,22 @@ spi23 驱动 GC9A01 240×240 圆形 LCD，通过 MIPI DBI SPI 接口，RGB565：
 | LCD CS | P1.31 | D1 |
 | LCD DC | P1.29 | D3 |
 
-GC9A01 模块 3.3V 供电，BLK 接 3.3V 或 PWM，共地。
+GC9A01 module on 3.3 V supply, BLK to 3.3 V or PWM, common ground.
 
-## 20B 适配
-- 删 wiki 的 `chosen{console=&uart20}` + `nordic,rpc-uart` + `shell-uart` 和整个 `&uart20` + `uart20_default/sleep` 重定义：LOG 走 USB CDC。
-- `spi23` 的 pinctrl（P1.4/1.6/1.5）已在板级 DTS，删 wiki 的 `spi23_default/sleep` 重定义，overlay 只补 `status="okay"` + `cs-gpios=<&gpio1 31>`。
-- 保留 mipi_dbi 节点（`dc-gpios=<&gpio1 29>`）+ gc9x01x 子节点，`chosen{display=&gc9x01x}`。
-- banner 文字 `nRF54LM20A` → `nRF54LM20B`。
+## 20B adaptations
+- Removed the wiki's `chosen{console=&uart20}` + `nordic,rpc-uart` + `shell-uart` and the entire `&uart20` + `uart20_default/sleep` redefinition: LOG goes through USB CDC.
+- The `spi23` pinctrl (P1.4/1.6/1.5) is already in the board-level DTS; removed the wiki's `spi23_default/sleep` redefinition, the overlay only adds `status="okay"` + `cs-gpios=<&gpio1 31>`.
+- Kept the mipi_dbi node (`dc-gpios=<&gpio1 29>`) + gc9x01x child node, `chosen{display=&gc9x01x}`.
+- Banner text changed from `nRF54LM20A` → `nRF54LM20B`.
 
-## 编译 / 烧录
+## Build / Flash
 ```
 cd 6_spi_lcd
 pio run
-./flash.sh        # IMGVER 默认 0.0.135
-# 按 RST
+./flash.sh        # IMGVER defaults to 0.0.135
+# Press RST
 ```
 
-## 验证
-- 屏幕：6 种纯色循环（每种 ~0.6 s）→ 6 条竖彩条（~2 s），循环。
-- USB CDC（115200）：`GC9A01 demo`、`Display ready, starting demo loop`、`Solid: RED…`、`Color bars`。
+## Verification
+- Screen: 6 solid colors cycling (~0.6 s each) → 6 vertical color bars (~2 s), looping.
+- USB CDC (115200): `GC9A01 demo`, `Display ready, starting demo loop`, `Solid: RED…`, `Color bars`.

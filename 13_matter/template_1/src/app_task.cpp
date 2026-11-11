@@ -24,20 +24,20 @@ using namespace ::chip::app;
 using namespace ::chip::DeviceLayer;
 
 namespace {
-/* 单次闪烁时序：亮 120ms，组内间隔 120ms，组间停顿 450ms 方便计数。 */
+/* Single-flash timing: on 120ms, in-group gap 120ms, between-group pause 450ms for easy counting. */
 constexpr uint32_t kFlashOnMs  = 120;
 constexpr uint32_t kFlashOffMs = 120;
 constexpr uint32_t kFlashGapMs = 450;
-/* 失败时报错的快闪时序。 */
+/* Fast-flash timing used to signal a failure. */
 constexpr uint32_t kFatalOnMs  = 80;
 constexpr uint32_t kFatalOffMs = 80;
 
-/* Board::Init() 成功后才置 true，确保失败路径不会去操作未初始化的 LED。 */
+/* Only set to true after Board::Init() succeeds, ensuring the failure path never touches an uninitialized LED. */
 bool sLedReady = false;
 
-/* 同步闪烁 count 次，用作阶段进度灯。仅在 Board::Init() 之后调用。
- * 用 Set() + k_sleep 而不是 Blink()，这样次数确定、不受异步 timer 影响，
- * 且 Set() 会停掉 Board 初始化时启动的状态指示 timer，避免冲突。
+/* Synchronously blink count times as a stage-progress indicator. Only called after Board::Init().
+ * Uses Set() + k_sleep instead of Blink() so the count is deterministic and unaffected by async timers,
+ * and Set() also stops the status-indication timer started during Board init to avoid conflicts.
  */
 void FlashLedTimes(uint8_t count)
 {
@@ -65,17 +65,17 @@ CHIP_ERROR AppTask::Init()
 	}
 	sLedReady = true;
 	LOG_INF("stage 1/3: board UI ready");
-	FlashLedTimes(1); /* 阶段 1：板载外设（LED/按键）就绪 */
+	FlashLedTimes(1); /* stage 1: on-board peripherals (LED/button) ready */
 
 	/* Register Matter event handler that controls the connectivity status LED based on the captured Matter network
 	 * state. */
 	ReturnErrorOnFailure(Nrf::Matter::RegisterEventHandler(Nrf::Board::DefaultMatterEventHandler, 0));
 	LOG_INF("stage 2/3: matter event handler registered");
-	FlashLedTimes(2); /* 阶段 2：Matter 事件处理已注册 */
+	FlashLedTimes(2); /* stage 2: Matter event handler registered */
 
 	ReturnErrorOnFailure(Nrf::Matter::StartServer());
 	LOG_INF("stage 3/3: matter server started, entering main loop");
-	FlashLedTimes(3); /* 阶段 3：服务器已启动，即将进入广播/主循环，之后 LED 交给连接状态指示 */
+	FlashLedTimes(3); /* stage 3: server started, about to enter advertising/main loop; LED then handed to the connectivity-status indicator */
 
 	return CHIP_NO_ERROR;
 }

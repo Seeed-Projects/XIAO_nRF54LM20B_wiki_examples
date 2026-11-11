@@ -1,32 +1,32 @@
-# PinMux demo 5 — I²C（SSD1306 OLED）
+# PinMux demo 5 — I²C (SSD1306 OLED)
 
-对照 [M20A wiki · I²C](https://wiki.seeedstudio.com/cn/xiao_nrf54lm20a_pin_multiplexing/#i2c)。
+Companion to the [M20A wiki · I²C](https://wiki.seeedstudio.com/xiao_nrf54lm20a_pin_multiplexing/#i2c).
 
-## 功能
-i2c22（P1.3 SDA / P1.7 SCL）驱动 128×64 SSD1306 OLED，用字符帧缓冲（cfb）居中显示
-`Hello XIAO` / `nRF54LM20B`，每秒刷新。
+## Function
+i2c22 (P1.3 SDA / P1.7 SCL) drives a 128×64 SSD1306 OLED, using a character frame buffer (cfb) to center
+`Hello XIAO` / `nRF54LM20B`, refreshing once per second.
 
-## 硬件
-| 信号 | 引脚 | XIAO D# |
+## Hardware
+| Signal | Pin | XIAO D# |
 |---|---|---|
 | I²C SDA | P1.3 | D4 |
 | I²C SCL | P1.7 | D5 |
 
-SSD1306 模块地址 0x3C，3.3V 供电，SDA/SCL 接 D4/D5，共地。
+SSD1306 module address 0x3C, 3.3 V supply, SDA/SCL to D4/D5, common ground.
 
-## 20B 适配
-- `i2c22` 的 pinctrl（P1.3/P1.7）已在板级 DTS，overlay 只补 `status="okay"` + ssd1306 节点，不重复定义 pinctrl。
-- 不动 console，LOG 走 USB CDC。
-- 第二行文字 `nRF54LM20A` → `nRF54LM20B`。
+## 20B adaptations
+- The `i2c22` pinctrl (P1.3/P1.7) is already in the board-level DTS; the overlay only adds `status="okay"` + the ssd1306 node, without redefining pinctrl.
+- Console left untouched; LOG goes through USB CDC.
+- Second line of text changed from `nRF54LM20A` → `nRF54LM20B`.
 
-## 编译 / 烧录
+## Build / Flash
 ```
 cd 5_i2c_oled
 pio run
-./flash.sh        # IMGVER 默认 0.0.134
-# 按 RST
+./flash.sh        # IMGVER defaults to 0.0.134
+# Press RST
 ```
 
-## 验证
-- OLED 屏幕居中显示两行文字。
-- USB CDC（115200）：`Initialized display`、`Display resolution: 128x64`、`Selected 8x8 font idx: N`。
+## Verification
+- The OLED shows two centered lines of text.
+- USB CDC (115200): `Initialized display`, `Display resolution: 128x64`, `Selected 8x8 font idx: N`.

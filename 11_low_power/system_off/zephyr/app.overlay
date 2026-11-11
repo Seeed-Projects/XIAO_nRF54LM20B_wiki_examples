@@ -2,7 +2,17 @@
  * XIAO nRF54LM20B Low Power Demo — System OFF: devicetree overlay.
  *
  * LDO1 (label imu_vdd / dmic_vdd, IMU + PDM mic rail) is marked regulator-boot-on
- * in the board dtsi; deleted here so the rail does not stay enabled in System OFF.
+ * in the board dtsi; deleted here so the rail does not stay force-enabled.
+ *
+ * The board dtsi only exposes LDO1. LDO2 (label header_ldo, the otherwise-empty
+ * "LDO2_3V3" header/test rail) is added here so the app can regulator_disable()
+ * it too — without a DT node the regulator driver never binds to LDO2 and the
+ * PMIC OTP default (enabled) is left untouched.
+ *
+ * Both rails are turned OFF at runtime from main.c (disable_pmic_ldos()) before
+ * sys_poweroff(); deleting boot-on / adding the node alone is not enough, because
+ * the nPM1300 powers up with its LDOs in the OTP-enabled state and the driver only
+ * touches the enable register when regulator_enable/disable is actually called.
  *
  * &pmic_leds (the nPM1300 status LEDs) is disabled so the PMIC LED driver cannot
  * source current while the SoC is off.
@@ -13,6 +23,17 @@
  */
 &imu_vdd {
 	/delete-property/ regulator-boot-on;
+};
+
+/* LDO2 is a sibling of LDO1 under the unlabeled regulators node, reached by path. */
+&{/pmic-i2c/npm1300@6b/regulators} {
+	header_ldo: LDO2 {
+		regulator-init-microvolt = <3300000>;
+		regulator-min-microvolt = <3300000>;
+		regulator-max-microvolt = <3300000>;
+		regulator-initial-mode = <NPM13XX_LDSW_MODE_LDO>;
+		regulator-allowed-modes = <NPM13XX_LDSW_MODE_LDO>;
+	};
 };
 
 &pmic_leds {

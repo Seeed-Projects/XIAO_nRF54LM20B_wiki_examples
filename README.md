@@ -50,6 +50,7 @@ The board ships with a **MCUboot + firmware loader** setup. Application images a
 | `12_NFC_fix/patch_ncs-v3.3.0-nfc-usb-clock-fix` | NCS v3.3.0 patch fixing the NFC USB clock issue |
 | `13_matter/template_1` | Matter template (NCS sample) |
 | `13_matter/coprocessor_1` | Thread co-processor (NCS sample) |
+| `14_micropython` | Pre-built signed MicroPython image + cross-platform USB DFU flashing scripts and board test console (no build required) |
 
 Open a folder in VS Code with the PlatformIO extension, or run `pio run` inside it, to build.
 
